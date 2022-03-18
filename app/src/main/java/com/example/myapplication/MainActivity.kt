@@ -1,32 +1,36 @@
 package com.example.myapplication
 
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.os.StrictMode
+import android.os.StrictMode.ThreadPolicy
 import android.util.Log
 import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.app.AppCompatActivity
 import com.example.myapplication.databinding.ActivityMainBinding
-import okhttp3.ResponseBody
 import org.osmdroid.bonuspack.routing.OSRMRoadManager
+import org.osmdroid.bonuspack.routing.RoadManager
 import org.osmdroid.tileprovider.tilesource.XYTileSource
 import org.osmdroid.util.GeoPoint
-import org.simpleframework.xml.*
+import org.simpleframework.xml.Attribute
+import org.simpleframework.xml.ElementList
+import org.simpleframework.xml.Root
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-import retrofit2.converter.jaxb.JaxbConverterFactory
 import retrofit2.converter.simplexml.SimpleXmlConverterFactory
 import retrofit2.http.GET
 import retrofit2.http.Query
-import javax.xml.bind.annotation.XmlRootElement
-import javax.xml.bind.annotation.XmlType
+
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding : ActivityMainBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        val policy = ThreadPolicy.Builder().permitAll().build()
+        StrictMode.setThreadPolicy(policy)
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
@@ -39,7 +43,7 @@ class MainActivity : AppCompatActivity() {
             XYTileSource(
                 "madMap",
                 0,
-                50,
+                30,
                 256,
                 ".png" ,
                 arrayOf("https://map.madskill.ru/osm/")))
@@ -57,13 +61,13 @@ class MainActivity : AppCompatActivity() {
                         mapController.setCenter(startPoint)
                         var geopoints = arrayListOf<GeoPoint>(
                             startPoint,
-                            GeoPoint(53.206725879340524, 50.22831362672528),
-                            GeoPoint(53.20620624551595, 50.23607098112966))
+                            GeoPoint(53.206725879340524,50.22831362672528),
+                            GeoPoint(53.20620624551595,50.23607098112966))
                         var roadManager = OSRMRoadManager(this@MainActivity, "agent")
-                        roadManager.setService("route")
-                        roadManager.setMean("foot")
-                        //roadManager.getRoad(geopoints)
-
+                        roadManager.setService("https://route.madskill.ru/route/v1/")
+                        roadManager.setMean("car/")
+                        var road = roadManager.getRoad(geopoints)
+                        binding.map.overlays.add(RoadManager.buildRoadOverlay(road))
                     }
                 }
                 else
@@ -93,7 +97,6 @@ class MainActivity : AppCompatActivity() {
             override fun onFailure(call: Call<osm>, t: Throwable) {
                 Log.d("ERROR", t.message.toString())
             }
-
         })
     }
 }
